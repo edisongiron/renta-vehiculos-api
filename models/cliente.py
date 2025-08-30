@@ -1,0 +1,15 @@
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional
+
+
+class Cliente(BaseModel):
+    id: int = Field(..., description="ID único del cliente", examples=[1])
+    nombre: str = Field(..., description="Nombre completo del cliente", examples=["Juan Pérez"])
+    email: str = Field(..., description="Correo electrónico del cliente", examples=["juan.perez@gmail.com"])
+    telefono: str = Field(..., description="Número de teléfono", examples=["+57 300 123 4567"])
+    cedula: str = Field(..., description="Número de identificación", examples=["12345678"])
+    direccion: Optional[str] = Field(None, description="Dirección del cliente")
+    fecha_registro: Optional[str] = Field(None, description="Fecha de registro del cliente")
+
+    class Config:
+        from_attributes = True
