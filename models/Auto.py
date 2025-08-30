@@ -1,4 +1,4 @@
-from Vehiculo import Vehiculo
+from vehiculo import Vehiculo
 
 class Auto(Vehiculo):
     tipo_auto: str # [deportivo, bus, camioneta, sedán]
