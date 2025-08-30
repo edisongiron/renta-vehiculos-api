@@ -3,6 +3,7 @@ from typing import List, Optional
 from models.cliente import Cliente
 from schemas.cliente_schemas import ClienteCreate, ClienteUpdate, ClienteResponse
 from database import clientes_db
+from services.alquiler_service import obtener_siguiente_id
 from datetime import datetime
 
 router = APIRouter(prefix="/clientes", tags=["Clientes"])
@@ -50,6 +51,24 @@ def obtener_cliente(cliente_id: int) -> ClienteResponse:
     summary="Crear nuevo cliente",
     description="Registra un nuevo cliente en el sistema"
 )
+def crear_cliente(cliente_data: ClienteCreate) -> ClienteResponse:
+    # Verificar que la cédula no esté duplicada
+    if any(c.cedula == cliente_data.cedula for c in clientes_db):
+        raise HTTPException(status_code=400, detail="La cédula ya está registrada")
+    
+    # Verificar que el email no esté duplicado
+    if any(c.email == cliente_data.email for c in clientes_db):
+        raise HTTPException(status_code=400, detail="El email ya está registrado")
+    
+    nuevo_id = obtener_siguiente_id("cliente")
+    nuevo_cliente = Cliente(
+        id=nuevo_id,
+        fecha_registro=datetime.now().strftime("%Y-%m-%d"),
+        **cliente_data.model_dump()
+    )
+    
+    clientes_db.append(nuevo_cliente)
+    return ClienteResponse.model_validate(nuevo_cliente.model_dump())
 
 
 @router.put(
@@ -84,6 +103,18 @@ def actualizar_cliente(cliente_id: int, cliente_data: ClienteUpdate) -> ClienteR
 def eliminar_cliente(cliente_id: int):
     # Verificar que el cliente no tenga alquileres activos
     from database import alquileres_db
+    from models.alquiler import EstadoAlquiler
+    
+    alquiler_activo = any(
+        a.cliente_id == cliente_id and a.estado == EstadoAlquiler.ACTIVO 
+        for a in alquileres_db
+    )
+    
+    if alquiler_activo:
+        raise HTTPException(
+            status_code=400, 
+            detail="No se puede eliminar un cliente con alquileres activos"
+        )
     
     for index, cliente in enumerate(clientes_db):
         if cliente.id == cliente_id:

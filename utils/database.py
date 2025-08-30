@@ -1,4 +1,6 @@
 from models.vehiculo import Vehiculo, TipoVehiculo, EstadoVehiculo
+from models.cliente import Cliente
+from models.alquiler import Alquiler, EstadoAlquiler
 from typing import List
 from datetime import datetime
 
@@ -72,5 +74,51 @@ vehiculos_db: List[Vehiculo] = [
     )
 ]
 
+clientes_db: List[Cliente] = [
+    Cliente(
+        id=1,
+        nombre="Juan Pérez",
+        email="juan.perez@gmail.com",
+        telefono="+57 300 123 4567",
+        cedula="12345678",
+        direccion="Calle 123 #45-67, Bogotá",
+        fecha_registro="2024-01-01"
+    ),
+    Cliente(
+        id=2,
+        nombre="María García",
+        email="maria.garcia@gmail.com",
+        telefono="+57 301 234 5678",
+        cedula="87654321",
+        direccion="Carrera 45 #12-34, Medellín",
+        fecha_registro="2024-01-15"
+    ),
+    Cliente(
+        id=3,
+        nombre="Carlos Rodríguez",
+        email="carlos.rodriguez@gmail.com",
+        telefono="+57 302 345 6789",
+        cedula="11223344",
+        direccion="Avenida 68 #23-45, Cali",
+        fecha_registro="2024-02-01"
+    )
+]
+
+alquileres_db: List[Alquiler] = [
+    Alquiler(
+        id=1,
+        cliente_id=2,
+        vehiculo_id=4,
+        fecha_inicio="2024-08-25",
+        fecha_fin="2024-08-30",
+        dias_alquiler=5,
+        precio_total=100.0,
+        estado=EstadoAlquiler.ACTIVO,
+        observaciones="Cliente experimentado en motos"
+    )
+]
+
 # Contadores para generar IDs únicos
 next_vehiculo_id = 7
+next_cliente_id = 4
+next_alquiler_id = 2
