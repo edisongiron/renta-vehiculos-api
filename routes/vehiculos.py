@@ -3,6 +3,7 @@ from typing import List, Optional
 from models.vehiculo import Vehiculo, TipoVehiculo, EstadoVehiculo
 from schemas.vehiculo_schemas import VehiculoCreate, VehiculoUpdate, VehiculoResponse, VehiculoDisponibilidad
 from database import vehiculos_db
+from services.alquiler_service import obtener_siguiente_id
 
 router = APIRouter(prefix="/vehiculos", tags=["Vehículos"])
 
@@ -56,6 +57,19 @@ def obtener_vehiculo(vehiculo_id: int) -> VehiculoResponse:
     summary="Crear nuevo vehículo",
     description="Registra un nuevo vehículo en la flota"
 )
+def crear_vehiculo(vehiculo_data: VehiculoCreate) -> VehiculoResponse:
+    # Verificar que la placa no esté duplicada
+    if any(v.placa == vehiculo_data.placa for v in vehiculos_db):
+        raise HTTPException(status_code=400, detail="La placa ya está registrada")
+    
+    nuevo_id = obtener_siguiente_id("vehiculo")
+    nuevo_vehiculo = Vehiculo(
+        id=nuevo_id,
+        **vehiculo_data.model_dump()
+    )
+    
+    vehiculos_db.append(nuevo_vehiculo)
+    return VehiculoResponse.model_validate(nuevo_vehiculo.model_dump())
 
 
 @router.put(
@@ -85,6 +99,18 @@ def actualizar_vehiculo(vehiculo_id: int, vehiculo_data: VehiculoUpdate) -> Vehi
 def eliminar_vehiculo(vehiculo_id: int):
     # Verificar que el vehículo no tenga alquileres activos
     from database import alquileres_db
+    from models.alquiler import EstadoAlquiler
+    
+    alquiler_activo = any(
+        a.vehiculo_id == vehiculo_id and a.estado == EstadoAlquiler.ACTIVO 
+        for a in alquileres_db
+    )
+    
+    if alquiler_activo:
+        raise HTTPException(
+            status_code=400, 
+            detail="No se puede eliminar un vehículo con alquileres activos"
+        )
     
     for index, vehiculo in enumerate(vehiculos_db):
         if vehiculo.id == vehiculo_id:

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from routes.vehiculos import router as vehiculos_router
 from routes.clientes import router as clientes_router
+from routes.alquileres import router as alquileres_router
 
 # Configuración de la aplicación FastAPI
 app = FastAPI(
@@ -18,6 +19,7 @@ app = FastAPI(
 # Registro de routers
 app.include_router(vehiculos_router)
 app.include_router(clientes_router)
+app.include_router(alquileres_router)
 
 
 @app.get(
