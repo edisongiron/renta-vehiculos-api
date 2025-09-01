@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
-from models.vehiculo import Vehiculo, TipoVehiculo, EstadoVehiculo
+from models.Vehiculo import Vehiculo, TipoVehiculo, EstadoVehiculo
 from schemas.vehiculo_schemas import VehiculoCreate, VehiculoUpdate, VehiculoResponse, VehiculoDisponibilidad
 from database import vehiculos_db
 from services.alquiler_service import obtener_siguiente_id

@@ -1,6 +1,6 @@
-from datetime import datetime, date
+from datetime import datetime
 from typing import Optional
-from models.vehiculo import EstadoVehiculo, TipoVehiculo
+from models.Vehiculo import EstadoVehiculo, TipoVehiculo
 from models.alquiler import EstadoAlquiler
 import database
 from database import vehiculos_db, clientes_db, alquileres_db
@@ -68,6 +68,7 @@ def verificar_disponibilidad_vehiculo(vehiculo_id: int, fecha_inicio: str, fecha
     
     for alquiler in alquileres_db:
         if alquiler.vehiculo_id == vehiculo_id and alquiler.estado == EstadoAlquiler.ACTIVO:
+
             alquiler_inicio = datetime.strptime(alquiler.fecha_inicio, "%Y-%m-%d").date()
             alquiler_fin = datetime.strptime(alquiler.fecha_fin, "%Y-%m-%d").date()
             

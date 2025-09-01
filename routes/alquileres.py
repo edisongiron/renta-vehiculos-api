@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
 from models.alquiler import Alquiler, EstadoAlquiler
-from models.vehiculo import EstadoVehiculo
+from models.Vehiculo import EstadoVehiculo
 from schemas.alquiler_schemas import (
     AlquilerCreate, AlquilerDevolucion, AlquilerResponse,
     AlquilerDetallado, CalcularCosto, CostoResponse
