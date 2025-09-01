@@ -1,4 +1,4 @@
-from .vehiculo import VehiculoCreate, VehiculoResponse, TipoVehiculo
+from .Vehiculo import VehiculoCreate, VehiculoResponse, TipoVehiculo
 from pydantic import Field, field_validator
 from enum import Enum
 
