@@ -18,6 +18,7 @@ def calcular_dias_alquiler(fecha_inicio: str, fecha_fin: str) -> int:
             raise ValueError("La fecha de fin debe ser posterior a la fecha de inicio")
         
         return (fin - inicio).days
+    
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Error en las fechas: {str(e)}")
 
@@ -37,6 +38,7 @@ def calcular_precio_total(vehiculo_id: int, dias: int) -> tuple[float, Optional[
     if dias >= 7:
         descuento = 0.15  # 15% de descuento por semana completa
         razon_descuento = "Descuento por alquiler semanal (15%)"
+        
     elif dias >= 3:
         descuento = 0.05  # 5% de descuento por 3 o más días
         razon_descuento = "Descuento por alquiler de 3+ días (5%)"

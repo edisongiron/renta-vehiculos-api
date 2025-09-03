@@ -16,7 +16,6 @@ class MotoBase(VehiculoCreate):
     cilindraje: int = Field(..., ge=50, le=2000, description="Cilindraje en cc")
     
     @field_validator('tipo_vehiculo')
-    @classmethod
     def validate_tipo_vehiculo(cls, v):
         if v != TipoVehiculo.MOTO:
             raise ValueError('tipo_vehiculo debe ser "moto" para la clase Moto')

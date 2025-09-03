@@ -25,11 +25,6 @@
 │   ├── vehiculo.py       # Modelo de vehículos
 │   ├── cliente.py        # Modelo de clientes
 │   └── alquiler.py       # Modelo de alquileres
-├── schemas/              # Schemas de validación
-│   ├── __init__.py
-│   ├── vehiculo_schemas.py
-│   ├── cliente_schemas.py
-│   └── alquiler_schemas.py
 ├── routes/               # Endpoints de la API
 │   ├── __init__.py
 │   ├── vehiculos.py      # CRUD de vehículos

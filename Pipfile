@@ -5,11 +5,14 @@ name = "pypi"
 
 [packages]
 fastapi = "==0.104.1"
-pydantic = "==2.5.0"
 python-multipart = "==0.0.6"
-uvicorn = {extras = ["standard"], version = "==0.24.0"}
+uvicorn = "*"
+sqlalchemy = "==2.0.43"
 
 [dev-packages]
 
 [requires]
-python_version = "3.13"
+python_version = "3.12"
+
+[scripts]
+dev = "uvicorn main:app --reload"

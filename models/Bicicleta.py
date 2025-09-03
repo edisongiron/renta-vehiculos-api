@@ -21,6 +21,7 @@ class BicicletaBase(VehiculoCreate):
     def validate_tipo_vehiculo(cls, v_type):
         if v_type != TipoVehiculo.BICICLETA:
             raise ValueError('tipo_vehiculo debe ser "bicicleta" para la clase Bicicleta')
+        
         return v_type
 
 class BicicletaCreate(BicicletaBase):
