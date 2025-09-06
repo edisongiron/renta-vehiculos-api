@@ -15,7 +15,7 @@ class Vehiculos:
         disponible: Optional[bool] = Query(None, description="Filtrar solo vehículos disponibles")
     ) -> List[VehiculoResponse]:
         vehiculos = vehiculos_db.copy()
-        
+    
         if tipo:
             vehiculos = [v for v in vehiculos if v.tipo == tipo]
         
