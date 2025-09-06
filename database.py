@@ -1,4 +1,4 @@
-from models.vehiculo import Vehiculo, TipoVehiculo, EstadoVehiculo
+from models.Vehiculo import Vehiculo, TipoVehiculo, EstadoVehiculo
 from models.cliente import Cliente
 from models.alquiler import Alquiler, EstadoAlquiler
 from typing import List

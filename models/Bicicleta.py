@@ -1,4 +1,4 @@
-from .vehiculo import VehiculoCreate, VehiculoResponse, TipoVehiculo
+from .Vehiculo import VehiculoCreate, VehiculoResponse, TipoVehiculo
 from pydantic import Field, field_validator
 from enum import Enum
 
@@ -18,11 +18,11 @@ class BicicletaBase(VehiculoCreate):
     numero_velocidades: int = Field(default=1, ge=1, le=30, description="Número de velocidades")
     
     @field_validator('tipo_vehiculo')
-    @classmethod
-    def validate_tipo_vehiculo(cls, v):
-        if v != TipoVehiculo.BICICLETA:
+    def validate_tipo_vehiculo(cls, v_type):
+        if v_type != TipoVehiculo.BICICLETA:
             raise ValueError('tipo_vehiculo debe ser "bicicleta" para la clase Bicicleta')
-        return v
+        
+        return v_type
 
 class BicicletaCreate(BicicletaBase):
     """Schema para crear una bicicleta (request)"""
