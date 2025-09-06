@@ -1,6 +1,6 @@
-from datetime import datetime, date
+from datetime import datetime
 from typing import Optional
-from models.vehiculo import EstadoVehiculo, TipoVehiculo
+from models.Vehiculo import EstadoVehiculo, TipoVehiculo
 from models.alquiler import EstadoAlquiler
 import database
 from database import vehiculos_db, clientes_db, alquileres_db
@@ -18,6 +18,7 @@ def calcular_dias_alquiler(fecha_inicio: str, fecha_fin: str) -> int:
             raise ValueError("La fecha de fin debe ser posterior a la fecha de inicio")
         
         return (fin - inicio).days
+    
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Error en las fechas: {str(e)}")
 
@@ -37,6 +38,7 @@ def calcular_precio_total(vehiculo_id: int, dias: int) -> tuple[float, Optional[
     if dias >= 7:
         descuento = 0.15  # 15% de descuento por semana completa
         razon_descuento = "Descuento por alquiler semanal (15%)"
+        
     elif dias >= 3:
         descuento = 0.05  # 5% de descuento por 3 o más días
         razon_descuento = "Descuento por alquiler de 3+ días (5%)"
@@ -68,6 +70,7 @@ def verificar_disponibilidad_vehiculo(vehiculo_id: int, fecha_inicio: str, fecha
     
     for alquiler in alquileres_db:
         if alquiler.vehiculo_id == vehiculo_id and alquiler.estado == EstadoAlquiler.ACTIVO:
+
             alquiler_inicio = datetime.strptime(alquiler.fecha_inicio, "%Y-%m-%d").date()
             alquiler_fin = datetime.strptime(alquiler.fecha_fin, "%Y-%m-%d").date()
             

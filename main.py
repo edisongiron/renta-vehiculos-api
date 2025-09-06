@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from routes.vehiculos import router as vehiculos_router
 from routes.clientes import router as clientes_router
 from routes.alquileres import router as alquileres_router
@@ -10,10 +11,16 @@ app = FastAPI(
                 "Incluye funcionalidades para gestionar vehículos, clientes y alquileres "
                 "con cálculo automático de costos y descuentos.",
     version="1.0.0",
-    contact={
-        "name": "Soporte API Alquiler",
-        "email": "soporte@alquilervehiculos.com"
-    }
+)
+
+
+# CORS
+app.add_middleware(
+    CORSMiddleware, 
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
 # Registro de routers
