@@ -20,7 +20,7 @@ class VehiculoBase(BaseModel):
     tipo: TipoVehiculo = Field(..., description="Tipo de vehículo")
     marca: str = Field(..., description="Marca del vehículo", examples=["Toyota"])
     modelo: str = Field(..., description="Modelo del vehículo", examples=["Corolla"])
-    año: int = Field(..., description="Año del vehículo", examples=[2022])
+    anio: int = Field(..., description="Año del vehículo", examples=[2022])
     placa: str = Field(..., description="Placa del vehículo", examples=["ABC123"])
     precio_por_dia: float = Field(..., description="Precio de alquiler por día", examples=[50.0])
     estado: EstadoVehiculo = Field(default=EstadoVehiculo.DISPONIBLE, description="Estado actual del vehículo")
@@ -37,7 +37,7 @@ class VehiculoCreate(VehiculoBase):
 
 class VehiculoResponse(VehiculoBase):
     """Esquema de respuesta para vehículo"""
-    id: int = Field(..., description="ID único del vehículo", examples=[1])
+    id: str = Field(..., description="ID único del vehículo (UUID)", examples=["894ace43-b3f1-4c0f-9b5d-6aa070dbd799"])
 
 
 class Vehiculo(VehiculoResponse):
@@ -48,7 +48,7 @@ class VehiculoCreate(BaseModel):
     tipo: TipoVehiculo = Field(..., description="Tipo de vehículo")
     marca: str = Field(..., description="Marca del vehículo", examples=["Toyota"])
     modelo: str = Field(..., description="Modelo del vehículo", examples=["Corolla"])
-    año: int = Field(..., description="Año del vehículo", examples=[2022])
+    anio: int = Field(..., description="Año del vehículo", examples=[2022])
     placa: str = Field(..., description="Placa del vehículo", examples=["ABC123"])
     precio_por_dia: float = Field(..., description="Precio de alquiler por día", examples=[50.0])
     caracteristicas: Optional[str] = Field(None, description="Características adicionales del vehículo")
@@ -57,21 +57,19 @@ class VehiculoCreate(BaseModel):
 class VehiculoUpdate(BaseModel):
     marca: Optional[str] = Field(None, description="Marca del vehículo")
     modelo: Optional[str] = Field(None, description="Modelo del vehículo")
-    año: Optional[int] = Field(None, description="Año del vehículo")
+    anio: Optional[int] = Field(None, description="Año del vehículo")
     precio_por_dia: Optional[float] = Field(None, description="Precio de alquiler por día")
-    estado: Optional[EstadoVehiculo] = Field(None, description="Estado del vehículo")
     caracteristicas: Optional[str] = Field(None, description="Características adicionales")
 
 
 class VehiculoResponse(BaseModel):
-    id: int
+    id: str
     tipo: TipoVehiculo
     marca: str
     modelo: str
-    año: int
+    anio: int
     placa: str
     precio_por_dia: float
-    estado: EstadoVehiculo
     caracteristicas: Optional[str] = None
 
     class Config:
@@ -80,6 +78,6 @@ class VehiculoResponse(BaseModel):
 
 
 class VehiculoDisponibilidad(BaseModel):
-    vehiculo_id: int
+    vehiculo_id: str
     disponible: bool
     razon: Optional[str] = None

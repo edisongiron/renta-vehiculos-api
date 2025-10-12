@@ -3,7 +3,7 @@ from typing import Optional
 
 
 class Cliente(BaseModel):
-    id: int = Field(..., description="ID único del cliente", examples=[1])
+    id: Optional[str] = Field(..., description="UUID único del cliente", examples=[""])
     nombre: str = Field(..., description="Nombre completo del cliente", examples=["Juan Pérez"])
     email: str = Field(..., description="Correo electrónico del cliente", examples=["juan.perez@gmail.com"])
     telefono: str = Field(..., description="Número de teléfono", examples=["+57 300 123 4567"])
@@ -30,7 +30,7 @@ class ClienteUpdate(BaseModel):
 
 
 class ClienteResponse(BaseModel):
-    id: int
+    id: str
     nombre: str
     email: str
     telefono: str

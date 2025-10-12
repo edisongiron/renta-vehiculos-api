@@ -1,3 +1,226 @@
+# API de Alquiler de Vehículos
+
+Sistema de gestión para alquiler de autos, motos y bicicletas con autenticación JWT y campos de auditoría.
+
+## Nuevas Características
+
+### 🔐 Autenticación JWT
+- Sistema completo de login/register
+- Tokens JWT para autorización
+- Middleware de autenticación en endpoints protegidos
+
+### 🗃️ Base de Datos Normalizada
+- **Estados de alquiler**: Tabla normalizada (`estado_alquiler`) con estados: activo, completado, cancelado
+- **Roles de usuario**: Tabla `roles` con administrador, empleado, usuario
+- **Campos de auditoría**: Todas las tablas principales incluyen `creado_por`, `actualizado_por`, `fecha_creacion`, `fecha_actualizacion`
+
+### 👥 Gestión de Usuarios
+- Tabla `auth_usuarios` para autenticación
+- Tabla `usuario` para información de perfil
+- Sistema de roles y permisos
+
+## 🚀 Instalación y Configuración
+
+### 1. Instalar Dependencias
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Inicializar Base de Datos
+```bash
+python init_data.py
+```
+
+Este script creará:
+- Todas las tablas necesarias
+- Estados de alquiler por defecto
+- Roles por defecto  
+- Usuario administrador inicial
+
+### 3. Credenciales Iniciales
+**Usuario Administrador:**
+- Username: `admin`
+- Password: `admin123`
+- Email: `admin@sistema.com`
+
+⚠️ **IMPORTANTE**: Cambia la contraseña después del primer login.
+
+### 4. Ejecutar la API
+```bash
+python main.py
+```
+
+La API estará disponible en: `http://localhost:8000`
+Documentación Swagger: `http://localhost:8000/docs`
+
+## 📋 Endpoints de Autenticación
+
+### POST /auth/register
+Registra un nuevo usuario
+```json
+{
+  "username": "nuevo_usuario",
+  "email": "user@email.com", 
+  "password": "password123",
+  "nombre_completo": "Nombre Completo",
+  "rol_id": 2
+}
+```
+
+### POST /auth/login
+Autentica un usuario
+```json
+{
+  "username": "admin",
+  "password": "admin123"
+}
+```
+
+**Respuesta:**
+```json
+{
+  "access_token": "eyJ0eXAiOiJKV1Q...",
+  "token_type": "bearer",
+  "expires_in": 1800,
+  "user": {
+    "id": "uuid",
+    "username": "admin",
+    "email": "admin@sistema.com",
+    "nombre_completo": "Administrador",
+    "activo": true,
+    "rol_id": 1
+  }
+}
+```
+
+### GET /auth/me
+Obtiene información del usuario actual (requiere autenticación)
+
+### GET /auth/verify  
+Verifica si el token es válido (requiere autenticación)
+
+## 🔒 Autenticación en Endpoints
+
+Para usar endpoints protegidos, incluye el token en el header:
+```
+Authorization: Bearer YOUR_JWT_TOKEN
+```
+
+## 📊 Cambios en la Base de Datos
+
+### Nuevas Tablas
+- `estado_alquiler` - Estados normalizados
+- `roles` - Roles de usuario  
+- `auth_usuarios` - Usuarios para autenticación
+
+### Campos Añadidos
+Todas las tablas principales ahora incluyen:
+- `creado_por` - ID del usuario que creó el registro
+- `actualizado_por` - ID del usuario que actualizó el registro  
+- `fecha_creacion` - Timestamp de creación
+- `fecha_actualizacion` - Timestamp de última actualización
+
+### Cambios en Relaciones
+- `alquileres.estado` → `alquileres.estado_id` (FK a `estado_alquiler`)
+- `usuario.rol` → `usuario.rol_id` (FK a `roles`)
+- Todos los IDs ahora son UUID (String de 36 caracteres)
+
+## 🛠️ Configuración de Seguridad
+
+### Cambiar Clave Secreta
+En `utils/auth_utils.py`, actualiza:
+```python
+SECRET_KEY = "tu_clave_secreta_muy_segura_aqui"
+```
+
+### Configurar Tiempo de Expiración
+```python  
+ACCESS_TOKEN_EXPIRE_MINUTES = 30  # 30 minutos
+```
+
+## 📝 Ejemplos de Uso
+
+### 1. Registrar Usuario
+```bash
+curl -X POST "http://localhost:8000/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "empleado1",
+    "email": "empleado@empresa.com",
+    "password": "password123",
+    "nombre_completo": "Juan Pérez",
+    "rol_id": 2
+  }'
+```
+
+### 2. Login
+```bash
+curl -X POST "http://localhost:8000/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "password": "admin123"
+  }'
+```
+
+### 3. Crear Alquiler (con autenticación)
+```bash
+curl -X POST "http://localhost:8000/alquileres/" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cliente_id": "cliente_uuid",
+    "vehiculo_id": "vehiculo_uuid", 
+    "fecha_inicio": "2024-01-15",
+    "fecha_fin": "2024-01-20",
+    "observaciones": "Alquiler de fin de semana"
+  }'
+```
+
+## 🔧 Estados y Roles
+
+### Estados de Alquiler
+1. **Activo** - Alquiler en curso
+2. **Completado** - Alquiler finalizado 
+3. **Cancelado** - Alquiler cancelado
+
+### Roles de Usuario
+1. **Administrador** - Acceso total al sistema
+2. **Empleado** - Acceso a operaciones
+3. **Usuario** - Acceso básico
+
+## ⚡ Próximas Mejoras
+
+- [ ] Middleware de permisos por rol
+- [ ] Logs de auditoría detallados
+- [ ] Recuperación de contraseña
+- [ ] Refresh tokens
+- [ ] Rate limiting
+- [ ] Validación avanzada de permisos por endpoint
+
+## 🐛 Solución de Problemas
+
+### Error: "Token inválido"
+- Verifica que el token esté en el header `Authorization: Bearer TOKEN`
+- Confirma que el token no haya expirado
+
+### Error: "Usuario no encontrado"  
+- Ejecuta `python init_data.py` para crear el usuario admin
+- Verifica las credenciales de login
+
+### Error de Base de Datos
+- Elimina `database.db` y ejecuta `python init_data.py` nuevamente
+- Verifica que todas las dependencias estén instaladas
+
+## 📞 Soporte
+
+Para reportar problemas o sugerencias, contacta al equipo de desarrollo.
+
+---
+
+**Versión:** 2.0.0  
+**Última actualización:** 2024
+
 # 🚗 API de Alquiler de Vehículos
 
 <div align="center">

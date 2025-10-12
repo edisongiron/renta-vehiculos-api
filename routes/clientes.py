@@ -1,62 +1,78 @@
-from fastapi import APIRouter
-from typing import List
-from controllers.Clientes.index import Clientes
-from models.cliente import  ClienteResponse
+from fastapi import APIRouter, Depends
+from typing import List, Optional
 
+from fastapi.params import Query
+from controllers.clientes import Clientes
+from models.cliente import ClienteResponse
+from utils.auth_utils import get_current_user
+from database.db import get_db
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/clientes", tags=["Clientes"])
 
+
 # GET -> /
-router.add_api_route(
+@router.get(
     path="/",
     response_model=List[ClienteResponse],
-    endpoint=Clientes.obtener_clientes,
     summary="Obtener todos los clientes",
-    description="Obtiene una lista de todos los clientes registrados",
-    methods=["GET"]
+    description="Obtiene una lista de todos los clientes registrados. Requiere autenticación.",
 )
+def obtener_clientes(
+    db: Session = Depends(get_db),
+    buscar: Optional[str] = Query(None, description="Buscar por nombre o email"),
+):
+    return Clientes.obtener_clientes(db, buscar)
 
 
-# GET -> /{cliente_id}
-router.add_api_route(
-    path="/{cliente_id}",
+# GET -> /{cedula}
+@router.get(
+    path="/{cedula}",
     response_model=ClienteResponse,
-    endpoint=Clientes.obtener_cliente,
-    summary="Obtener cliente por ID",
-    description="Obtiene los detalles de un cliente específico por su ID",
-    methods=["GET"]
+    summary="Obtener cliente por cédula",
+    description="Obtiene los detalles de un cliente específico por su cédula. Requiere autenticación.",
 )
+def obtener_cliente(cedula: str, db: Session = Depends(get_db)):
+    return Clientes.obtener_cliente(db, cedula)
 
 
 # POST -> /
-router.add_api_route(
+@router.post(
     path="/",
     response_model=ClienteResponse,
-    endpoint=Clientes.crear_cliente,
     status_code=201,
     summary="Crear nuevo cliente",
-    description="Registra un nuevo cliente en el sistema",
-    methods=["POST"]
+    description="Registra un nuevo cliente en el sistema. Requiere autenticación.",
 )
+def crear_cliente(cliente_data: ClienteResponse, db: Session = Depends(get_db)):
+    return Clientes.crear_cliente(db, cliente_data)
 
 
-# PUT -> /{cliente_id}
-router.add_api_route(
-    path="/{cliente_id}",
+# PUT -> /{cedula}
+@router.put(
+    path="/{cedula}",
     response_model=ClienteResponse,
-    endpoint=Clientes.actualizar_cliente,
     summary="Actualizar cliente",
-    description="Actualiza los datos de un cliente existente",
-    methods=["PUT"]
+    description="Actualiza los datos de un cliente existente. Requiere autenticación.",
 )
+def actualizar_cliente(
+    cedula: int,
+    cliente: ClienteResponse,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return Clientes.actualizar_cliente(db, cedula, cliente)
 
 
 # DELETE -> /{cliente_id}
-router.add_api_route(
-    path="/{cliente_id}",
+@router.delete(
+    path="/{cedula}",
     summary="Eliminar cliente",
-    endpoint=Clientes.eliminar_cliente,
-    description="Elimina un cliente del sistema (solo si no tiene alquileres activos)",
-    methods=["DELETE"]
+    description="Elimina un cliente del sistema (solo si no tiene alquileres activos). Requiere autenticación.",
 )
-
+def eliminar_cliente(
+    cedula: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return Clientes.eliminar_cliente(db, cedula)

@@ -4,10 +4,15 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+pydantic = {extras = ["email"], version = "*"}
 fastapi = "==0.104.1"
+uvicorn = "==0.24.0"
+sqlalchemy = "==1.4.51"
 python-multipart = "==0.0.6"
-uvicorn = "*"
-sqlalchemy = "==2.0.43"
+bcrypt = "==4.1.2"
+python-dotenv = "==1.0.0"
+python-jose = {extras = ["cryptography"], version = "==3.3.0"}
+passlib = {extras = ["bcrypt"], version = "==1.7.4"}
 
 [dev-packages]
 
