@@ -21,11 +21,32 @@ import uuid
 
 
 class Auth:
+    """
+    Controlador para gestionar la autenticación y registro de usuarios.
+    
+    Esta clase maneja todas las operaciones relacionadas con autenticación,
+    incluyendo login, registro de nuevos usuarios y gestión de tokens JWT.
+    """
+
     @staticmethod
     def login(user_data: UserLogin, db: Session):
-        """Endpoint para login de usuarios"""
+        """
+        Autentica un usuario y genera un token de acceso JWT.
+        
+        Verifica las credenciales del usuario, actualiza la fecha de último login
+        y genera un token JWT con tiempo de expiración configurado.
+        
+        Args:
+            user_data: Credenciales del usuario (username y password)
+            db: Sesión de base de datos SQLAlchemy
+            
+        Returns:
+            TokenResponse con el token JWT y datos del usuario autenticado
+            
+        Raises:
+            HTTPException: Si las credenciales son inválidas o hay error del servidor
+        """
         try:
-            # Autenticar usuario
             user = authenticate_user(user_data.username, user_data.password, db)
             if not user:
                 raise HTTPException(
@@ -33,7 +54,6 @@ class Auth:
                     detail="Credenciales inválidas",
                 )
 
-            # Actualizar último login
             update_query = (
                 update(auth_usuarios)
                 .where(auth_usuarios.c.id == user["id"])
@@ -42,7 +62,6 @@ class Auth:
             db.execute(update_query)
             db.commit()
 
-            # Crear token
             access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
             access_token = create_access_token(
                 data={"sub": user["id"]}, expires_delta=access_token_expires
@@ -55,14 +74,14 @@ class Auth:
                 nombre_completo=user["nombre_completo"],
                 activo=user["activo"],
                 rol_id=user["rol_id"],
-                fecha_creacion=None,  # Se puede obtener de la BD si se necesita
+                fecha_creacion=None,
                 ultimo_login=datetime.utcnow(),
             )
 
             return TokenResponse(
                 access_token=access_token,
                 token_type="bearer",
-                expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # En segundos
+                expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
                 user=user_response,
             )
 
@@ -76,9 +95,23 @@ class Auth:
 
     @staticmethod
     def register(user_data: UserRegister, db: Session):
-        """Endpoint para registro de nuevos usuarios"""
+        """
+        Registra un nuevo usuario en el sistema.
+        
+        Valida que el username y email no estén duplicados, verifica la existencia
+        del rol y crea el usuario con contraseña hasheada.
+        
+        Args:
+            user_data: Datos del nuevo usuario a registrar
+            db: Sesión de base de datos SQLAlchemy
+            
+        Returns:
+            UserResponse con los datos del usuario creado
+            
+        Raises:
+            HTTPException: Si username/email duplicados, rol inválido o error al crear
+        """
         try:
-            # Verificar si el username ya existe
             query = select(auth_usuarios).where(
                 auth_usuarios.c.username == user_data.username
             )
@@ -89,7 +122,6 @@ class Auth:
                     detail="El nombre de usuario ya está registrado",
                 )
 
-            # Verificar si el email ya existe
             query = select(auth_usuarios).where(
                 auth_usuarios.c.email == user_data.email
             )
@@ -100,7 +132,6 @@ class Auth:
                     detail="El email ya está registrado",
                 )
 
-            # Verificar que el rol existe
             if user_data.rol_id:
                 role_query = select(roles).where(roles.c.id == user_data.rol_id)
                 role_exists = db.execute(role_query).first()
@@ -110,10 +141,8 @@ class Auth:
                         detail="El rol especificado no existe",
                     )
 
-            # Hash de la contraseña
             hashed_password = get_password_hash(user_data.password)
 
-            # Crear nuevo usuario
             user_id = str(uuid.uuid4())
             insert_query = insert(auth_usuarios).values(
                 id=user_id,
@@ -122,14 +151,13 @@ class Auth:
                 password_hash=hashed_password,
                 nombre_completo=user_data.nombre_completo,
                 activo=True,
-                rol_id=user_data.rol_id or 2,  # Default: usuario regular
+                rol_id=user_data.rol_id or 2,
                 fecha_creacion=datetime.utcnow(),
             )
 
             db.execute(insert_query)
             db.commit()
 
-            # Obtener el usuario creado
             user_query = select(auth_usuarios).where(auth_usuarios.c.id == user_id)
             created_user = db.execute(user_query).first()
 

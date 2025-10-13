@@ -11,12 +11,30 @@ from datetime import datetime
 
 
 class Clientes:
+    """
+    Controlador para gestionar las operaciones de clientes.
+    
+    Esta clase maneja todas las operaciones CRUD relacionadas con clientes,
+    incluyendo búsqueda, creación, actualización y eliminación con validaciones.
+    """
 
     @staticmethod
     def obtener_clientes(
         db: Session,
         buscar: Optional[str] = Query(None, description="Buscar por nombre o email"),
     ) -> List[ClienteResponse]:
+        """
+        Obtiene una lista de clientes con búsqueda opcional.
+        
+        Permite filtrar clientes por nombre o email mediante búsqueda de texto.
+        
+        Args:
+            db: Sesión de base de datos SQLAlchemy
+            buscar: Texto para buscar en nombre o email del cliente
+            
+        Returns:
+            Lista de objetos ClienteResponse con los clientes encontrados
+        """
         query = select(clientes)
 
         if buscar:
@@ -31,6 +49,19 @@ class Clientes:
 
     @staticmethod
     def obtener_cliente(db: Session, cedula: int) -> ClienteResponse:
+        """
+        Obtiene un cliente específico por su cédula.
+        
+        Args:
+            db: Sesión de base de datos SQLAlchemy
+            cedula: Número de cédula del cliente a buscar
+            
+        Returns:
+            Objeto ClienteResponse con los datos del cliente
+            
+        Raises:
+            HTTPException: Si el cliente no existe
+        """
         query = select(clientes).where(clientes.c.cedula == cedula)
         result = db.execute(query).fetchone()
 
@@ -41,21 +72,34 @@ class Clientes:
 
     @staticmethod
     def crear_cliente(db: Session, cliente_data: ClienteCreate) -> ClienteResponse:
-        # Verificar que la cédula no esté duplicada
+        """
+        Crea un nuevo cliente en el sistema.
+        
+        Valida que la cédula y el email no estén duplicados antes de crear.
+        La fecha de registro se asigna automáticamente.
+        
+        Args:
+            db: Sesión de base de datos SQLAlchemy
+            cliente_data: Datos del cliente a crear
+            
+        Returns:
+            Objeto ClienteResponse con el cliente creado
+            
+        Raises:
+            HTTPException: Si la cédula o email ya están registrados
+        """
         cedula_query = select(clientes).where(clientes.c.cedula == cliente_data.cedula)
         cedula_result = db.execute(cedula_query).fetchone()
 
         if cedula_result:
             raise HTTPException(status_code=400, detail="La cédula ya está registrada")
 
-        # Verificar que el email no esté duplicado
         email_query = select(clientes).where(clientes.c.email == cliente_data.email)
         email_result = db.execute(email_query).fetchone()
 
         if email_result:
             raise HTTPException(status_code=400, detail="El email ya está registrado")
 
-        # Insertar nuevo cliente
         data_dict = cliente_data.model_dump()
         data_dict["fecha_registro"] = datetime.now().strftime("%Y-%m-%d")
 
@@ -63,7 +107,6 @@ class Clientes:
         result = db.execute(insert_query)
         db.commit()
 
-        # Obtener el cliente creado
         nuevo_id = result.inserted_primary_key[0]
         query = select(clientes).where(clientes.c.id == nuevo_id)
         nuevo_cliente = db.execute(query).fetchone()
@@ -74,14 +117,29 @@ class Clientes:
     def actualizar_cliente(
         db: Session, cedula: int, cliente_data: ClienteUpdate
     ) -> ClienteResponse:
-        # Verificar que el cliente existe
+        """
+        Actualiza los datos de un cliente existente.
+        
+        Valida que el email no esté duplicado si se está actualizando.
+        Solo actualiza los campos proporcionados.
+        
+        Args:
+            db: Sesión de base de datos SQLAlchemy
+            cedula: Cédula del cliente a actualizar
+            cliente_data: Nuevos datos del cliente (solo campos a actualizar)
+            
+        Returns:
+            Objeto ClienteResponse con el cliente actualizado
+            
+        Raises:
+            HTTPException: Si el cliente no existe o el email está duplicado
+        """
         query = select(clientes).where(clientes.c.cedula == cedula)
         result = db.execute(query).fetchone()
 
         if not result:
             raise HTTPException(status_code=404, detail="Cliente no encontrado")
 
-        # Verificar email duplicado si se está actualizando
         update_data = cliente_data.model_dump(exclude_unset=True)
         if "email" in update_data and update_data["email"] != result.email:
             email_query = select(clientes).where(
@@ -94,7 +152,6 @@ class Clientes:
                     status_code=400, detail="El email ya está registrado"
                 )
 
-        # Actualizar solo los campos proporcionados
         if update_data:
             update_query = (
                 update(clientes)
@@ -104,7 +161,6 @@ class Clientes:
             db.execute(update_query)
             db.commit()
 
-        # Obtener el cliente actualizado
         updated_query = select(clientes).where(clientes.c.cedula == cedula)
         updated_cliente = db.execute(updated_query).fetchone()
 
@@ -112,7 +168,22 @@ class Clientes:
 
     @staticmethod
     def eliminar_cliente(db: Session, cedula: str):
-        # Verificar que el cliente existe
+        """
+        Elimina un cliente del sistema.
+        
+        Verifica que el cliente no tenga alquileres activos antes de eliminar.
+        No se puede eliminar un cliente con alquileres en curso.
+        
+        Args:
+            db: Sesión de base de datos SQLAlchemy
+            cedula: Cédula del cliente a eliminar
+            
+        Returns:
+            JSONResponse con mensaje de confirmación
+            
+        Raises:
+            HTTPException: Si el cliente no existe o tiene alquileres activos
+        """
         query = select(clientes).where(clientes.c.cedula == cedula)
         existing_cliente = db.execute(query).fetchone()
 
@@ -121,7 +192,6 @@ class Clientes:
 
         cliente_id = existing_cliente._mapping["id"]
 
-        # Verificar que el cliente no tenga alquileres activos
         from models.alquiler import EstadoAlquiler
 
         alquiler_query = select(alquileres).where(
@@ -136,7 +206,6 @@ class Clientes:
                 detail="No se puede eliminar un cliente con alquileres activos",
             )
 
-        # Eliminar el cliente
         delete_query = delete(clientes).where(clientes.c.id == cliente_id)
         db.execute(delete_query)
         db.commit()

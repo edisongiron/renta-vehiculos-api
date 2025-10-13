@@ -17,7 +17,6 @@ from utils.auth_utils import get_current_user
 router = APIRouter(prefix="/vehiculos", tags=["Vehículos"])
 
 
-# GET -> /
 @router.get(
     "/",
     response_model=List[VehiculoResponse],
@@ -37,10 +36,25 @@ def obtener_vehiculos(
         None, description="Filtrar solo vehículos disponibles"
     ),
 ):
+    """
+    Endpoint para obtener lista de vehículos con filtros opcionales.
+    
+    Permite filtrar por tipo (AUTO, MOTO, BICICLETA), estado y disponibilidad.
+    Requiere autenticación mediante token JWT.
+    
+    Args:
+        db: Sesión de base de datos
+        current_user: Usuario autenticado
+        tipo: Tipo de vehículo para filtrar
+        estado: Estado del vehículo para filtrar
+        disponible: Si es True, solo muestra vehículos disponibles
+        
+    Returns:
+        Lista de vehículos que cumplen con los filtros
+    """
     return Vehiculos.obtener_vehiculos(db, tipo, estado, disponible)
 
 
-# GET -> /{vehiculo_id}
 @router.get(
     "/{vehiculo_id}",
     response_model=VehiculoResponse,
@@ -52,10 +66,20 @@ def obtener_vehiculo(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    """
+    Endpoint para obtener un vehículo específico por ID.
+    
+    Args:
+        vehiculo_id: ID único del vehículo
+        db: Sesión de base de datos
+        current_user: Usuario autenticado
+        
+    Returns:
+        Datos completos del vehículo
+    """
     return Vehiculos.obtener_vehiculo(db, vehiculo_id)
 
 
-# POST -> /
 @router.post(
     "/",
     response_model=VehiculoResponse,
@@ -68,10 +92,22 @@ def crear_vehiculo(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    """
+    Endpoint para crear un nuevo vehículo en la flota.
+    
+    Valida que la placa no esté duplicada antes de crear.
+    
+    Args:
+        vehiculo_data: Datos del vehículo a crear
+        db: Sesión de base de datos
+        current_user: Usuario autenticado
+        
+    Returns:
+        Vehículo creado con todos sus datos
+    """
     return Vehiculos.crear_vehiculo(db, vehiculo_data)
 
 
-# PUT -> /{vehiculo_id}
 @router.put(
     "/{vehiculo_id}",
     response_model=VehiculoResponse,
@@ -84,10 +120,23 @@ def actualizar_vehiculo(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    """
+    Endpoint para actualizar datos de un vehículo.
+    
+    Solo actualiza los campos proporcionados en la petición.
+    
+    Args:
+        vehiculo_id: ID del vehículo a actualizar
+        vehiculo_data: Nuevos datos del vehículo
+        db: Sesión de base de datos
+        current_user: Usuario autenticado
+        
+    Returns:
+        Vehículo actualizado con los cambios aplicados
+    """
     return Vehiculos.actualizar_vehiculo(db, vehiculo_id, vehiculo_data)
 
 
-# DELETE -> /{vehiculo_id}
 @router.delete(
     "/{vehiculo_id}",
     summary="Eliminar vehículo",
@@ -98,10 +147,23 @@ def eliminar_vehiculo(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    """
+    Endpoint para eliminar un vehículo de la flota.
+    
+    Verifica que el vehículo no tenga alquileres activos antes de eliminar.
+    No se puede eliminar un vehículo que esté actualmente alquilado.
+    
+    Args:
+        vehiculo_id: ID del vehículo a eliminar
+        db: Sesión de base de datos
+        current_user: Usuario autenticado
+        
+    Returns:
+        Mensaje de confirmación de eliminación
+    """
     return Vehiculos.eliminar_vehiculo(db, vehiculo_id)
 
 
-# GET -> /{vehiculo_id}/disponibilidad
 @router.get(
     "/{vehiculo_id}/disponibilidad",
     response_model=VehiculoDisponibilidad,
@@ -113,4 +175,18 @@ def verificar_disponibilidad(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    """
+    Endpoint para verificar la disponibilidad de un vehículo.
+    
+    Consulta si el vehículo tiene alquileres activos y devuelve
+    su estado de disponibilidad con la razón si no está disponible.
+    
+    Args:
+        vehiculo_id: ID del vehículo a verificar
+        db: Sesión de base de datos
+        current_user: Usuario autenticado
+        
+    Returns:
+        Estado de disponibilidad del vehículo con razón si no está disponible
+    """
     return Vehiculos.verificar_disponibilidad(db, vehiculo_id)

@@ -8,7 +8,7 @@ from typing import Dict
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
-# POST -> /auth/login
+
 @router.post(
     "/login",
     response_model=TokenResponse,
@@ -16,9 +16,22 @@ router = APIRouter(prefix="/auth", tags=["Autenticación"])
     description="Autentica un usuario y devuelve un token JWT"
 )
 def login_user(user_data: UserLogin, db: Session = Depends(get_db)):
+    """
+    Endpoint para autenticar un usuario.
+    
+    Valida las credenciales y genera un token JWT con tiempo de expiración.
+    También actualiza la fecha de último login del usuario.
+    
+    Args:
+        user_data: Credenciales del usuario (username y password)
+        db: Sesión de base de datos
+        
+    Returns:
+        Token JWT y datos del usuario autenticado
+    """
     return Auth.login(user_data, db)
 
-# POST -> /auth/register
+
 @router.post(
     "/register",
     response_model=UserResponse,
@@ -27,9 +40,22 @@ def login_user(user_data: UserLogin, db: Session = Depends(get_db)):
     description="Registra un nuevo usuario en el sistema"
 )
 def register_user(user_data: UserRegister, db: Session = Depends(get_db)):
+    """
+    Endpoint para registrar un nuevo usuario.
+    
+    Valida que el username y email no estén duplicados,
+    hashea la contraseña y crea el usuario con rol asignado.
+    
+    Args:
+        user_data: Datos del nuevo usuario a registrar
+        db: Sesión de base de datos
+        
+    Returns:
+        Datos del usuario creado (sin contraseña)
+    """
     return Auth.register(user_data, db)
 
-# GET -> /auth/me
+
 @router.get(
     "/me",
     response_model=Dict,
@@ -37,9 +63,21 @@ def register_user(user_data: UserRegister, db: Session = Depends(get_db)):
     description="Obtiene la información del usuario autenticado actual"
 )
 def get_me(current_user: dict = Depends(get_current_user)):
+    """
+    Endpoint para obtener información del usuario autenticado.
+    
+    Extrae los datos del usuario desde el token JWT.
+    Requiere autenticación válida.
+    
+    Args:
+        current_user: Datos del usuario extraídos del token
+        
+    Returns:
+        Información completa del usuario actual
+    """
     return current_user
 
-# GET -> /auth/verify
+
 @router.get(
     "/verify",
     response_model=Dict,
@@ -47,4 +85,16 @@ def get_me(current_user: dict = Depends(get_current_user)):
     description="Verifica si el token JWT es válido"
 )
 def verify_token(current_user: dict = Depends(get_current_user)):
+    """
+    Endpoint para verificar la validez de un token JWT.
+    
+    Valida que el token sea válido y no haya expirado.
+    Útil para verificar sesiones activas.
+    
+    Args:
+        current_user: Datos del usuario extraídos del token
+        
+    Returns:
+        Confirmación de validez con ID y username del usuario
+    """
     return {"valid": True, "user_id": current_user["id"], "username": current_user["username"]}

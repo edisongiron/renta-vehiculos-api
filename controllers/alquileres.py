@@ -30,8 +30,14 @@ from models.alquiler import (
 )
 
 class Alquileres:
+    """
+    Controlador para gestionar las operaciones de alquileres de vehículos.
+    
+    Esta clase maneja todas las operaciones CRUD relacionadas con alquileres,
+    incluyendo la creación, consulta, actualización y cancelación de alquileres.
+    También gestiona el cálculo de costos y la devolución de vehículos.
+    """
 
-    # GET -> /alquileres
     @staticmethod
     def obtener_alquileres(
         estado_id: Optional[EstadoAlquiler] = Query(
@@ -50,6 +56,22 @@ class Alquileres:
             None, description="Filtrar hasta esta fecha (YYYY-MM-DD)"
         ),
     ) -> List[AlquilerResponse]:
+        """
+        Obtiene una lista de alquileres con filtros opcionales.
+        
+        Args:
+            estado_id: Estado del alquiler para filtrar (ACTIVO, COMPLETADO, CANCELADO)
+            cliente_id: ID del cliente para filtrar alquileres
+            vehiculo_id: ID del vehículo para filtrar alquileres
+            fecha_desde: Fecha de inicio para filtrar (formato YYYY-MM-DD)
+            fecha_hasta: Fecha de fin para filtrar (formato YYYY-MM-DD)
+            
+        Returns:
+            Lista de objetos AlquilerResponse con los alquileres encontrados
+            
+        Raises:
+            HTTPException: Si el formato de las fechas es inválido
+        """
         query = select(alquileres)
 
         if estado_id:
@@ -86,21 +108,31 @@ class Alquileres:
         result = conn.execute(query).fetchall()
         return [AlquilerResponse(**dict(row._mapping)) for row in result]
 
-    # GET -> /alquileres/{alquiler_id}
     @staticmethod
     def obtener_alquiler_detallado(alquiler_id: str) -> AlquilerDetallado:
-        # Obtener el alquiler
+        """
+        Obtiene información detallada de un alquiler específico.
+        
+        Incluye datos completos del cliente, vehículo y estado del alquiler.
+        
+        Args:
+            alquiler_id: ID único del alquiler a consultar
+            
+        Returns:
+            Objeto AlquilerDetallado con toda la información del alquiler
+            
+        Raises:
+            HTTPException: Si el alquiler no existe o hay datos inconsistentes
+        """
         alquiler_query = select(alquileres).where(alquileres.c.id == alquiler_id)
         alquiler = conn.execute(alquiler_query).fetchone()
 
         if not alquiler:
             raise HTTPException(status_code=404, detail="Alquiler no encontrado")
 
-        # Obtener el cliente
         cliente_query = select(clientes).where(clientes.c.id == alquiler.cliente_id)
         cliente = conn.execute(cliente_query).fetchone()
 
-        # Obtener el vehículo
         vehiculo_query = select(vehiculos).where(vehiculos.c.id == alquiler.vehiculo_id)
         vehiculo = conn.execute(vehiculo_query).fetchone()
 
@@ -126,14 +158,27 @@ class Alquileres:
             observaciones=alquiler.observaciones,
         )
 
-    # POST -> /alquileres
     @staticmethod
     def crear_alquiler(db: Session, alquiler_data: AlquilerCreate) -> AlquilerResponse:
-        # Verificar que el cliente existe
+        """
+        Crea un nuevo alquiler de vehículo.
+        
+        Verifica la existencia del cliente, disponibilidad del vehículo,
+        calcula días de alquiler y precio total con descuentos aplicables.
+        
+        Args:
+            db: Sesión de base de datos SQLAlchemy
+            alquiler_data: Datos del alquiler a crear
+            
+        Returns:
+            Objeto AlquilerResponse con el alquiler creado
+            
+        Raises:
+            HTTPException: Si el cliente no existe, vehículo no disponible o error en creación
+        """
         if not verificar_cliente_existe(alquiler_data.cliente_id):
             raise HTTPException(status_code=404, detail="Cliente no encontrado")
 
-        # Verificar disponibilidad del vehículo en el rango de fechas
         disponible, razon = verificar_disponibilidad_vehiculo(
             alquiler_data.vehiculo_id,
             alquiler_data.fecha_inicio,
@@ -143,7 +188,6 @@ class Alquileres:
         if not disponible:
             raise HTTPException(status_code=400, detail=razon)
 
-        # Calcular días y precio
         dias = calcular_dias_alquiler(
             alquiler_data.fecha_inicio, alquiler_data.fecha_fin
         )
@@ -152,7 +196,6 @@ class Alquileres:
             alquiler_data.vehiculo_id, dias
         )
 
-        # Preparar datos para insertar (sin fecha_creacion)
         data_dict = alquiler_data.model_dump()
         data_dict["dias_alquiler"] = dias
         data_dict["precio_total"] = precio_total
@@ -168,7 +211,6 @@ class Alquileres:
         
         db.commit()
 
-        # Si no lo logró, buscar el último ID como fallback
         if not last_id:
             query_last = (
                 select(alquileres.c.id).order_by(alquileres.c.id.desc()).limit(1)
@@ -185,23 +227,34 @@ class Alquileres:
 
         return AlquilerResponse(**dict(nuevo_alquiler._mapping))
 
-    # POST -> /calcular-costo
     @staticmethod
     def calcular_costo_alquiler(calculo_data: CalcularCosto) -> CostoResponse:
-        # Obtener vehículo (necesitamos precio_por_dia para la respuesta)
+        """
+        Calcula el costo estimado de un alquiler sin crearlo.
+        
+        Calcula días de alquiler, precio base y descuentos aplicables
+        según el tipo de vehículo y duración del alquiler.
+        
+        Args:
+            calculo_data: Datos para calcular el costo (vehículo_id, fechas)
+            
+        Returns:
+            Objeto CostoResponse con el desglose completo del costo
+            
+        Raises:
+            HTTPException: Si el vehículo no existe
+        """
         vehiculo_q = select(vehiculos).where(vehiculos.c.id == calculo_data.vehiculo_id)
         vehiculo_row = conn.execute(vehiculo_q).fetchone()
         
         if not vehiculo_row:
             raise HTTPException(status_code=404, detail="Vehículo no encontrado")
 
-        # Calcular días y costo usando tus utilidades
         dias = calcular_dias_alquiler(calculo_data.fecha_inicio, calculo_data.fecha_fin)
         precio_total, descuento_aplicado, razon_descuento = calcular_precio_total(
             calculo_data.vehiculo_id, dias
         )
 
-        # Construir respuesta
         return CostoResponse(
             vehiculo_id=calculo_data.vehiculo_id,
             precio_por_dia=vehiculo_row.precio_por_dia,
@@ -211,13 +264,27 @@ class Alquileres:
             razon_descuento=razon_descuento,
         )
 
-    # PUT -> /alquileres/{alquiler_id}/devolver
     @staticmethod
     def devolver_vehiculo(
         db: Session, alquiler_id: str, devolucion_data: AlquilerDevolucion
     ) -> AlquilerResponse:
+        """
+        Registra la devolución de un vehículo alquilado.
         
-        # Obtener alquiler
+        Actualiza el estado del alquiler a COMPLETADO, registra la fecha de devolución
+        y recalcula el precio si la devolución es antes o después de lo esperado.
+        
+        Args:
+            db: Sesión de base de datos SQLAlchemy
+            alquiler_id: ID del alquiler a devolver
+            devolucion_data: Datos de la devolución (fecha y observaciones)
+            
+        Returns:
+            Objeto AlquilerResponse con el alquiler actualizado
+            
+        Raises:
+            HTTPException: Si el alquiler no existe, no está activo o fecha inválida
+        """
         alquiler_q = select(alquileres).where(alquileres.c.id == alquiler_id)
         alquiler = conn.execute(alquiler_q).fetchone()
         
@@ -227,7 +294,6 @@ class Alquileres:
         if alquiler.estado_id != EstadoAlquiler.ACTIVO.value:
             raise HTTPException(status_code=400, detail="El alquiler no está activo")
 
-        # Validar fecha de devolución
         try:
             fecha_devolucion = datetime.strptime(
                 devolucion_data.fecha_devolucion, "%Y-%m-%d"
@@ -245,7 +311,6 @@ class Alquileres:
                 status_code=400, detail="Formato de fecha inválido (use YYYY-MM-DD)"
             )
 
-        # Recalcular días y, si deseas, precio final (por si devolvieron antes o después)
         dias_actualizados = calcular_dias_alquiler(
             alquiler.fecha_inicio, devolucion_data.fecha_devolucion
         )
@@ -253,7 +318,6 @@ class Alquileres:
             alquiler.vehiculo_id, dias_actualizados
         )
 
-        # Actualizar alquiler en BD
         update_data = {
             "estado_id": EstadoAlquiler.COMPLETADO.value,
             "fecha_devolucion_real": devolucion_data.fecha_devolucion,
@@ -273,7 +337,6 @@ class Alquileres:
         db.execute(update_query)
         db.commit()
 
-        # Obtener alquiler actualizado y devolver
         updated_q = select(alquileres).where(alquileres.c.id == alquiler_id)
         updated = db.execute(updated_q).fetchone()
         
@@ -284,10 +347,24 @@ class Alquileres:
 
         return AlquilerResponse(**dict(updated._mapping))
 
-    # DELETE -> /alquileres/{alquiler_id}
     @staticmethod
     def cancelar_alquiler(db: Session, alquiler_id: str) -> JSONResponse:
+        """
+        Cancela un alquiler activo.
         
+        Cambia el estado del alquiler a CANCELADO y libera el vehículo.
+        Solo se pueden cancelar alquileres en estado ACTIVO.
+        
+        Args:
+            db: Sesión de base de datos SQLAlchemy
+            alquiler_id: ID del alquiler a cancelar
+            
+        Returns:
+            JSONResponse con mensaje de confirmación
+            
+        Raises:
+            HTTPException: Si el alquiler no existe o no está activo
+        """
         alquiler_q = select(alquileres).where(alquileres.c.id == alquiler_id)
         alquiler = db.execute(alquiler_q).fetchone()
         
@@ -299,7 +376,6 @@ class Alquileres:
                 status_code=400, detail="Solo se pueden cancelar alquileres activos"
             )
 
-        # Actualizar estado del alquiler a CANCELADO
         update_query = (
             update(alquileres)
             .where(alquileres.c.id == alquiler_id)

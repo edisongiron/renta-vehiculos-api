@@ -5,8 +5,13 @@ from models.Vehiculo import Vehiculo, TipoVehiculo, EstadoVehiculo, VehiculoCrea
 from utils.alquiler_utils import obtener_siguiente_id
 
 
-
 class Vehiculos:
+    """
+    Controlador alternativo para gestionar vehículos usando base de datos en memoria.
+    
+    Esta clase implementa las mismas operaciones que el controlador principal
+    pero trabaja directamente con la base de datos en memoria (vehiculos_db).
+    """
 
     @staticmethod
     def obtener_vehiculos(
@@ -14,6 +19,17 @@ class Vehiculos:
         estado: Optional[EstadoVehiculo] = Query(None, description="Filtrar por estado del vehículo"),
         disponible: Optional[bool] = Query(None, description="Filtrar solo vehículos disponibles")
     ) -> List[VehiculoResponse]:
+        """
+        Obtiene lista de vehículos con filtros opcionales.
+        
+        Args:
+            tipo: Tipo de vehículo para filtrar
+            estado: Estado del vehículo para filtrar
+            disponible: Si es True, filtra solo disponibles
+            
+        Returns:
+            Lista de VehiculoResponse con los vehículos filtrados
+        """
         vehiculos = vehiculos_db.copy()
     
         if tipo:
@@ -33,6 +49,18 @@ class Vehiculos:
 
     @staticmethod
     def obtener_vehiculo(vehiculo_id: int) -> VehiculoResponse:
+        """
+        Obtiene un vehículo específico por ID.
+        
+        Args:
+            vehiculo_id: ID del vehículo a buscar
+            
+        Returns:
+            VehiculoResponse con datos del vehículo
+            
+        Raises:
+            HTTPException: Si el vehículo no existe
+        """
         vehiculo = next((v for v in vehiculos_db if v.id == vehiculo_id), None)
         if not vehiculo:
             raise HTTPException(status_code=404, detail="Vehículo no encontrado")
@@ -42,7 +70,18 @@ class Vehiculos:
 
     @staticmethod
     def crear_vehiculo(vehiculo_data: VehiculoCreate) -> VehiculoResponse:
-        # Verificar que la placa no esté duplicada
+        """
+        Crea un nuevo vehículo en la base de datos en memoria.
+        
+        Args:
+            vehiculo_data: Datos del vehículo a crear
+            
+        Returns:
+            VehiculoResponse con el vehículo creado
+            
+        Raises:
+            HTTPException: Si la placa ya está registrada
+        """
         if any(v.placa == vehiculo_data.placa for v in vehiculos_db):
             raise HTTPException(status_code=400, detail="La placa ya está registrada")
         
@@ -58,9 +97,21 @@ class Vehiculos:
 
     @staticmethod
     def actualizar_vehiculo(vehiculo_id: int, vehiculo_data: VehiculoUpdate) -> VehiculoResponse:
+        """
+        Actualiza un vehículo existente.
+        
+        Args:
+            vehiculo_id: ID del vehículo a actualizar
+            vehiculo_data: Nuevos datos del vehículo
+            
+        Returns:
+            VehiculoResponse con el vehículo actualizado
+            
+        Raises:
+            HTTPException: Si el vehículo no existe
+        """
         for index, vehiculo in enumerate(vehiculos_db):
             if vehiculo.id == vehiculo_id:
-                # Actualizar solo los campos proporcionados
                 update_data = vehiculo_data.model_dump(exclude_unset=True)
                 updated_vehiculo = vehiculo.model_copy(update=update_data)
                 vehiculos_db[index] = updated_vehiculo
@@ -72,7 +123,18 @@ class Vehiculos:
 
     @staticmethod
     def eliminar_vehiculo(vehiculo_id: int):
-        # Verificar que el vehículo no tenga alquileres activos
+        """
+        Elimina un vehículo de la base de datos.
+        
+        Args:
+            vehiculo_id: ID del vehículo a eliminar
+            
+        Returns:
+            Diccionario con mensaje de confirmación
+            
+        Raises:
+            HTTPException: Si el vehículo no existe o tiene alquileres activos
+        """
         from database import alquileres_db
         from models.alquiler import EstadoAlquiler
         
@@ -97,6 +159,18 @@ class Vehiculos:
 
     @staticmethod
     def verificar_disponibilidad(vehiculo_id: int) -> VehiculoDisponibilidad:
+        """
+        Verifica la disponibilidad de un vehículo.
+        
+        Args:
+            vehiculo_id: ID del vehículo a verificar
+            
+        Returns:
+            VehiculoDisponibilidad con estado y razón
+            
+        Raises:
+            HTTPException: Si el vehículo no existe
+        """
         vehiculo = next((v for v in vehiculos_db if v.id == vehiculo_id), None)
         if not vehiculo:
             raise HTTPException(status_code=404, detail="Vehículo no encontrado")
