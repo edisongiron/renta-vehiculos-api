@@ -30,7 +30,7 @@ class ClienteUpdate(BaseModel):
 
 
 class ClienteResponse(BaseModel):
-    id: str
+    id: Optional[str]
     nombre: str
     email: str
     telefono: str

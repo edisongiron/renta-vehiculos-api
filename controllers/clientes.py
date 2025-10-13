@@ -164,6 +164,9 @@ class Clientes:
         updated_query = select(clientes).where(clientes.c.cedula == cedula)
         updated_cliente = db.execute(updated_query).fetchone()
 
+        if not updated_cliente:
+            raise HTTPException(status_code=500, detail="Error al actualizar el cliente")
+
         return ClienteResponse(**dict(updated_cliente._mapping))
 
     @staticmethod

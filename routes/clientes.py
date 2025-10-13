@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from fastapi.params import Query
 from controllers.clientes import Clientes
-from models.cliente import ClienteResponse
+from models.cliente import ClienteResponse, ClienteCreate, ClienteUpdate
 from utils.auth_utils import get_current_user
 from database.db import get_db
 from sqlalchemy.orm import Session
@@ -64,7 +64,7 @@ def obtener_cliente(cedula: str, db: Session = Depends(get_db)):
     summary="Crear nuevo cliente",
     description="Registra un nuevo cliente en el sistema. Requiere autenticación.",
 )
-def crear_cliente(cliente_data: ClienteResponse, db: Session = Depends(get_db)):
+def crear_cliente(cliente_data: ClienteCreate, db: Session = Depends(get_db)):
     """
     Endpoint para crear un nuevo cliente.
     
@@ -89,7 +89,7 @@ def crear_cliente(cliente_data: ClienteResponse, db: Session = Depends(get_db)):
 )
 def actualizar_cliente(
     cedula: int,
-    cliente: ClienteResponse,
+    cliente: ClienteUpdate,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
