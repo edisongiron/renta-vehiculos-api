@@ -21,9 +21,10 @@ Sistema de gestión para alquiler de autos, motos y bicicletas con autenticació
 
 ## 🚀 Instalación y Configuración
 
-### 1. Instalar Dependencias
+### 1. Instalar Dependencias (usando Pipenv)
 ```bash
-pip install -r requirements.txt
+pipenv shell
+pipenv install
 ```
 
 ### 2. Inicializar Base de Datos
