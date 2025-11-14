@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, status, Depends, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import select
 from database.db import get_db
@@ -60,30 +60,52 @@ def verify_token(token: str):
         )
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """Obtiene el usuario actual a partir del token JWT"""
-    token = credentials.credentials
-    payload = verify_token(token)
-    user_id = payload.get("sub")
+    token = None
+
+    auth_header = request.headers.get("Authorization")
+
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
     
-    # Buscar el usuario en la base de datos
-    query = select(auth_usuarios).where(auth_usuarios.c.id == user_id)
-    result = db.execute(query).first()
-    
-    if result is None:
+    else:
+        token = request.cookies.get("access_token")
+
+    if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuario no encontrado",
+            detail="Token no encontrado"
         )
-    
+
+
+    try:
+        payload = verify_token(token)
+        user_id = payload.get("sub")
+        
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token inválido o expirado"
+        )
+
+    query = select(auth_usuarios).where(auth_usuarios.c.id == user_id)
+    result = db.execute(query).first()
+
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Usuario no encontrado"
+        )
+
     if not result.activo:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuario inactivo",
+            detail="Usuario inactivo"
         )
-    
+
     return {
         "id": result.id,
         "username": result.username,
