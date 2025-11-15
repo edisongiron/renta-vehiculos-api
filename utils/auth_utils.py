@@ -1,20 +1,19 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import HTTPException, status, Depends, Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer
 from sqlalchemy import select
 from database.db import get_db
 from sqlalchemy.orm import Session
 from schemas.auth_usuarios import auth_usuarios
 
-# Configuración
+
 SECRET_KEY = "tu_clave_secreta_muy_segura_aqui_cambiarla_en_produccion"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 2130
 
-# Configurar el contexto para hashear passwords
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Security scheme
@@ -32,9 +31,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Crea un token JWT"""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)

@@ -31,18 +31,27 @@ def login_user(user_data: UserLogin, response: Response, db: Session = Depends(g
     """
     result = Auth.login(user_data, db)
 
-
     response.set_cookie(
         key="access_token",
-        value=result.access_token, 
+        value=result.access_token,
         httponly=True,
-        secure=True,  
+        secure=True,
         samesite="Lax",
         max_age=result.expires_in,
         path="/",
     )
 
     return result
+
+
+@router.post(
+    "/logout",
+    summary="Logout de usuario",
+    description="Elimina la cookie de autenticación del usuario",
+)
+async def logout(response: Response):
+    response.delete_cookie(key="access_token", path="/", httponly=True, samesite="lax")
+    return {"message": "Logout exitoso"}
 
 
 @router.post(

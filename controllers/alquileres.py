@@ -56,22 +56,6 @@ class Alquileres:
             None, description="Filtrar hasta esta fecha (YYYY-MM-DD)"
         ),
     ) -> List[AlquilerResponse]:
-        """
-        Obtiene una lista de alquileres con filtros opcionales.
-        
-        Args:
-            estado_id: Estado del alquiler para filtrar (ACTIVO, COMPLETADO, CANCELADO)
-            cliente_id: ID del cliente para filtrar alquileres
-            vehiculo_id: ID del vehículo para filtrar alquileres
-            fecha_desde: Fecha de inicio para filtrar (formato YYYY-MM-DD)
-            fecha_hasta: Fecha de fin para filtrar (formato YYYY-MM-DD)
-            
-        Returns:
-            Lista de objetos AlquilerResponse con los alquileres encontrados
-            
-        Raises:
-            HTTPException: Si el formato de las fechas es inválido
-        """
         query = select(alquileres)
 
         if estado_id:
@@ -106,7 +90,15 @@ class Alquileres:
                 )
 
         result = conn.execute(query).fetchall()
-        return [AlquilerResponse(**dict(row._mapping)) for row in result]
+        
+        # Convertir y agregar el nombre del estado
+        alquileres_response = []
+        for row in result:
+            alquiler_dict = dict(row._mapping)
+            alquiler_dict['estado_nombre'] = EstadoAlquiler(alquiler_dict['estado_id']).name
+            alquileres_response.append(AlquilerResponse(**alquiler_dict))
+        
+        return alquileres_response
 
     @staticmethod
     def obtener_alquiler_detallado(alquiler_id: str) -> AlquilerDetallado:
