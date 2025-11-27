@@ -12,7 +12,7 @@ cliente = Table(
     Column("email", String(100)),
     Column("telefono", String(50)),
     Column("direccion", String(150)),
-    Column("cedula", Integer, unique=True),
+    Column("cedula", String(20), unique=True),
     Column("fecha_registro", String(20)),
     
     # Campos de auditoría

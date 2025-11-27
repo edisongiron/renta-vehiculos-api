@@ -1,5 +1,5 @@
 from enum import Enum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 
@@ -11,6 +11,8 @@ class EstadoAlquiler(int, Enum):
 
 
 class Alquiler(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, from_attributes=True)
+    
     id: Optional[str] = Field(None, description="ID único del alquiler")
     cliente_id: str = Field(..., description="ID del cliente")
     vehiculo_id: str = Field(..., description="ID del vehículo")
@@ -34,15 +36,10 @@ class Alquiler(BaseModel):
     )
     observaciones: Optional[str] = Field(None, description="Observaciones del alquiler")
     
-    # Campos de auditoría
     creado_por: Optional[str] = Field(None, description="ID del usuario que creó el registro")
     actualizado_por: Optional[str] = Field(None, description="ID del usuario que actualizó el registro")
     fecha_creacion: Optional[datetime] = Field(None, description="Fecha de creación del registro")
     fecha_actualizacion: Optional[datetime] = Field(None, description="Fecha de última actualización")
-
-    class Config:
-        use_enum_values = True
-        from_attributes = True
 
 
 class AlquilerCreate(BaseModel):
@@ -71,6 +68,8 @@ class AlquilerDevolucion(BaseModel):
 
 
 class AlquilerResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
+    
     id: str
     cliente_id: str
     vehiculo_id: str
@@ -79,22 +78,19 @@ class AlquilerResponse(BaseModel):
     dias_alquiler: int
     precio_total: float
     estado_id: int
-    estado_nombre: Optional[str] = None  # Para mostrar el nombre del estado
+    estado_nombre: Optional[str] = None
     fecha_devolucion_real: Optional[str] = None
     observaciones: Optional[str] = None
     
-    # Campos de auditoría (opcionales para respuesta)
     creado_por: Optional[str] = None
     actualizado_por: Optional[str] = None
     fecha_creacion: Optional[datetime] = None
     fecha_actualizacion: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
-        use_enum_values = True
-
 
 class AlquilerDetallado(BaseModel):
+    model_config = ConfigDict(use_enum_values=True)
+    
     id: str
     cliente_nombre: str
     cliente_email: str
@@ -110,9 +106,6 @@ class AlquilerDetallado(BaseModel):
     estado_nombre: Optional[str] = None
     fecha_devolucion_real: Optional[str] = None
     observaciones: Optional[str] = None
-
-    class Config:
-        use_enum_values = True
 
 
 class CalcularCosto(BaseModel):

@@ -1,5 +1,5 @@
 from enum import Enum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 
 
@@ -16,6 +16,8 @@ class EstadoVehiculo(str, Enum):
 
 
 class VehiculoBase(BaseModel):
+    model_config = ConfigDict(use_enum_values=True)
+    
     """Esquema base para vehículos"""
     tipo: TipoVehiculo = Field(..., description="Tipo de vehículo")
     marca: str = Field(..., description="Marca del vehículo", examples=["Toyota"])
@@ -24,9 +26,6 @@ class VehiculoBase(BaseModel):
     precio_por_dia: float = Field(..., description="Precio de alquiler por día", examples=[50.0])
     estado: EstadoVehiculo = Field(default=EstadoVehiculo.DISPONIBLE, description="Estado actual del vehículo")
     caracteristicas: Optional[str] = Field(None, description="Características adicionales del vehículo")
-
-    class Config:
-        use_enum_values = True
 
 
 class VehiculoCreate(VehiculoBase):
@@ -60,6 +59,8 @@ class VehiculoUpdate(BaseModel):
 
 
 class VehiculoResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
+    
     id: str
     tipo: TipoVehiculo
     marca: str
@@ -67,10 +68,6 @@ class VehiculoResponse(BaseModel):
     placa: str
     precio_por_dia: float
     caracteristicas: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-        use_enum_values = True
 
 
 class VehiculoDisponibilidad(BaseModel):
